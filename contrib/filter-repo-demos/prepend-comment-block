@@ -106,14 +106,18 @@ def lint_with_real_filenames(commit, metadata):
       objhash, objtype, objsize = cat_file_process.stdout.readline().split()
       contents_plus_newline = cat_file_process.stdout.read(int(objsize)+1)
 
-      header = contents_plus_newline[0:10].decode('utf-8')
+      header = contents_plus_newline[0:5].decode('utf-8')
       
       # Write it out to a file with the same basename
       filename = os.path.join(tmpdir, os.path.basename(change.filename))
+      root, ext = os.path.splitext(change.filename)
+      print(ext)
       with open(filename, "wb") as f:
         # Prepend comment block if comments characters (/*, //) are not found at beginning of header
         if(header.find('/') == -1):
           print("Prepending comment block for file",change.filename)
+          if filename.endswith(b".php"):
+            f.write(b"<?php\n")  
           f.write(b"/**\n * @brief ")
           f.write(os.path.basename(change.filename))
           f.write(b"\n * @author ")
@@ -123,7 +127,10 @@ def lint_with_real_filenames(commit, metadata):
           f.write(b"\n * @copyright (c) ")
           f.write(('%s' % year).encode())
           f.write(b" TODO") #placeholder for full copyright to be applied by another process
-          f.write(b"\n*/\n\n")
+          f.write(b"\n*/\n")
+          if filename.endswith(b".php"):
+            f.write(b"?>\n")
+          f.write(b"\n")
           
         f.write(contents_plus_newline[:-1])
 
